@@ -4,7 +4,7 @@ from datetime import datetime
 
 from fastapi_users.db import SQLAlchemyBaseUserTable
 from sqlalchemy import TIMESTAMP, Boolean, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 from src.user.constants import Role
@@ -39,3 +39,5 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     created_at: Mapped[TIMESTAMP] = mapped_column(
         TIMESTAMP, default=datetime.utcnow
     )
+    tickets = relationship("Ticket", back_populates="user")
+    massages = relationship("Message", back_populates="user")
