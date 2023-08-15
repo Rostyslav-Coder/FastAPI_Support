@@ -1,11 +1,6 @@
 [tool.black]
 target-version = ['py311']
 line-length = 79
-exclude = ''' 
-/ ( 
-    | migrations 
-)/ 
-'''
 
 [tool.isort]
 py_version=311
@@ -17,13 +12,6 @@ use_parentheses = true
 line_length = 79
 skip = '.venv,venv,env,migrations'
 src_paths = ["src"]
-
-[tool.ruff]
-exclude = ''' 
-/ ( 
-    | migrations 
-)/ 
-'''
 
 [tool.pytest.ini_options]
 pythonpath = [".", "src"]
