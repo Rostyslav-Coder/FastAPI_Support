@@ -2,7 +2,7 @@
 
 from typing import Optional
 
-from fastapi import Request
+from fastapi import Depends, Request
 from fastapi_users import (
     BaseUserManager,
     IntegerIDMixin,
@@ -14,6 +14,7 @@ from fastapi_users import (
 from src.config import MANAGER_SECRET
 from src.user.constants import Role
 from src.user.models import User
+from src.user.utils import get_user_db
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
@@ -60,3 +61,10 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         await self.on_after_register(created_user, request)
 
         return created_user
+
+
+async def get_user_manager(
+    user_db=Depends(get_user_db),
+):
+    """Function to Create User`s managment"""
+    yield UserManager(user_db)
