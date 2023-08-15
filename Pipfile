@@ -1,0 +1,24 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "~=0.100"
+fastapi-users = "~=12.1"
+fastapi-users-db-sqlalchemy = "~=6.0"
+pydantic = "~=2.1"
+uvicorn = "~=0.23"
+sqlalchemy = "~=2.0"
+alembic = "~=1.11"
+asyncpg = "~=0.28"
+python-dotenv = "~=1.0"
+
+[dev-packages]
+black = "*"
+isort = "*"
+mypy = "*"
+ruff = "*"
+
+[requires]
+python_version = "3.11"
