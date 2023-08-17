@@ -1,5 +1,6 @@
 """src/user/base_config.py"""
 
+from fastapi import Request
 from fastapi_users import FastAPIUsers
 from fastapi_users.authentication import (
     AuthenticationBackend,
@@ -28,4 +29,13 @@ auth_backend = AuthenticationBackend(
 
 fastapi_users = FastAPIUsers[User, int](get_user_manager, [auth_backend])
 
+
+async def get_enabled_backends(request: Request):
+    """Return the enabled dependencies following custom logic."""
+    return [auth_backend]
+
+
 current_user = fastapi_users.current_user()
+current_active_user = fastapi_users.current_user(
+    active=True, get_enabled_backends=get_enabled_backends
+)
