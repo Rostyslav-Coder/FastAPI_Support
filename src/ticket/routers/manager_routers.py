@@ -65,3 +65,22 @@ async def ticket_get_all_my(
     result = await session.execute(query)
     tickets = result.scalars().all()
     return tickets
+
+
+@router.patch("/close", response_model=TicketOut)
+async def ticket_close(
+    ticket_id: int,
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.MANAGER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.id == ticket_id)
+    result = await session.execute(query)
+    ticket = result.scalar_one_or_none()
+    ticket.status = TicketStatus.CLOSED
+    session.add(ticket)
+    await session.commit()
+    await session.refresh(ticket)
+    return ticket
