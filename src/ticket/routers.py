@@ -1,6 +1,7 @@
 """src/ticket/routers.py"""
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
@@ -21,7 +22,7 @@ async def create_ticket(
     session: AsyncSession = Depends(get_async_session),
 ):
     if user.role != str(Role.USER):
-        raise HTTPException(status_code=403, detail="No permission")
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     result = Ticket(
         title=ticket.title,
@@ -33,3 +34,17 @@ async def create_ticket(
     await session.commit()
     await session.refresh(result)
     return result
+
+
+@router.get("/all", response_model=list[TicketOut])
+async def tickets_get(
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.USER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.user_id == user.id)
+    result = await session.execute(query)
+    tickets = result.scalars().all()
+    return tickets
