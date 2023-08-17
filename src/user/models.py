@@ -26,7 +26,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     )
     first_name: Mapped[str] = mapped_column(String(length=100), nullable=True)
     last_name: Mapped[str] = mapped_column(String(length=100), nullable=True)
-    role: Mapped[str] = mapped_column(String(length=10), default=Role.USER)
+    role: Mapped[int] = mapped_column(Integer, default=Role.USER)
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, nullable=True
     )
@@ -39,5 +39,9 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     created_at: Mapped[TIMESTAMP] = mapped_column(
         TIMESTAMP, default=datetime.utcnow
     )
-    tickets = relationship("Ticket", back_populates="user")
-    massages = relationship("Message", back_populates="user")
+    tickets = relationship(
+        "Ticket", back_populates="user", foreign_keys="[Ticket.user_id]"
+    )
+    messages = relationship(
+        "Message", back_populates="user", foreign_keys="[Message.user_id]"
+    )
