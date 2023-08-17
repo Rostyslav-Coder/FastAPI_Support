@@ -1,7 +1,7 @@
 """src/ticket/routers/manager_routers.py"""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
@@ -61,7 +61,12 @@ async def ticket_get_all_my(
     if user.role != str(Role.MANAGER):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    query = select(Ticket).where(Ticket.manager_id == user.id)
+    query = select(Ticket).where(
+        and_(
+            Ticket.manager_id == user.id,
+            Ticket.status != str(TicketStatus.CLOSED),
+        )
+    )
     result = await session.execute(query)
     tickets = result.scalars().all()
     return tickets
