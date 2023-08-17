@@ -1,11 +1,11 @@
 """src/user/constants.py"""
 
-from enum import Enum
+from enum import IntEnum
 
 
-class Role(Enum):
+class Role(IntEnum):
     """Class used for Users role definition."""
 
-    USER = "USER"
-    MANAGER = "MANAGER"
-    ADMIN = "ADMIN"
+    USER = 1
+    MANAGER = 2
+    ADMIN = 3
