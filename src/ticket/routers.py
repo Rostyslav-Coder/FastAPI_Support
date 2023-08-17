@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=TicketOut)
-async def create_ticket(
+async def ticket_create(
     ticket: TicketIn,
     user: UserRead = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
@@ -37,7 +37,7 @@ async def create_ticket(
 
 
 @router.get("/all", response_model=list[TicketOut])
-async def tickets_get(
+async def ticket_get_all(
     user: UserRead = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
@@ -48,3 +48,18 @@ async def tickets_get(
     result = await session.execute(query)
     tickets = result.scalars().all()
     return tickets
+
+
+@router.get("/{id}", response_model=TicketOut)
+async def ticket_get_by_id(
+    ticket_id: int,
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.USER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.id == ticket_id)
+    result = await session.execute(query)
+    ticket = result.scalar_one_or_none()
+    return ticket
