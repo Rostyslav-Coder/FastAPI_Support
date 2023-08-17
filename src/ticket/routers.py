@@ -50,7 +50,7 @@ async def ticket_get_all(
     return tickets
 
 
-@router.get("/{id}", response_model=TicketOut)
+@router.get("/ticket_id/{id}", response_model=TicketOut)
 async def ticket_get_by_id(
     ticket_id: int,
     user: UserRead = Depends(current_user),
@@ -60,6 +60,21 @@ async def ticket_get_by_id(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = select(Ticket).where(Ticket.id == ticket_id)
+    result = await session.execute(query)
+    ticket = result.scalar_one_or_none()
+    return ticket
+
+
+@router.get("/ticket_title/{title}", response_model=TicketOut)
+async def ticket_get_by_title(
+    ticket_title: str,
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.USER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.title == ticket_title)
     result = await session.execute(query)
     ticket = result.scalar_one_or_none()
     return ticket
