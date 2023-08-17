@@ -20,11 +20,13 @@ class Ticket(Base):
     title: Mapped[str] = mapped_column(String(length=100), nullable=False)
     text: Mapped[str] = mapped_column(String(length=4000), nullable=False)
     visibility: Mapped[bool] = mapped_column(Boolean, default=True)
-    status: Mapped[str] = mapped_column(
-        String(length=10), default=TicketStatus.NOT_STARTED
+    status: Mapped[int] = mapped_column(
+        Integer, default=TicketStatus.NOT_STARTED
     )
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    manager_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    manager_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
     user = relationship(
         "User", back_populates="tickets", foreign_keys=[user_id]
     )
