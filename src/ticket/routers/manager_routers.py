@@ -51,3 +51,17 @@ async def ticket_asign(
     await session.commit()
     await session.refresh(ticket)
     return ticket
+
+
+@router.get("/all_my", response_model=list[TicketOut])
+async def ticket_get_all_my(
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.MANAGER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.manager_id == user.id)
+    result = await session.execute(query)
+    tickets = result.scalars().all()
+    return tickets
