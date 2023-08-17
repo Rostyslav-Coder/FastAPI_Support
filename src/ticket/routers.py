@@ -1,7 +1,7 @@
 """src/ticket/routers.py"""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
@@ -59,13 +59,15 @@ async def ticket_get_by_id(
     if user.role != str(Role.USER):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    query = select(Ticket).where(Ticket.id == ticket_id)
+    query = select(Ticket).where(
+        and_(Ticket.user_id == user.id, Ticket.id == ticket_id)
+    )
     result = await session.execute(query)
     ticket = result.scalar_one_or_none()
     return ticket
 
 
-@router.get("/ticket_title/{title}", response_model=TicketOut)
+@router.get("/ticket_title/{title}", response_model=list[TicketOut])
 async def ticket_get_by_title(
     ticket_title: str,
     user: UserRead = Depends(current_user),
@@ -74,7 +76,9 @@ async def ticket_get_by_title(
     if user.role != str(Role.USER):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    query = select(Ticket).where(Ticket.title == ticket_title)
+    query = select(Ticket).where(
+        and_(Ticket.user_id == user.id, Ticket.title == ticket_title)
+    )
     result = await session.execute(query)
-    ticket = result.scalar_one_or_none()
+    ticket = result.scalars().all()
     return ticket
