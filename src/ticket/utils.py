@@ -1,8 +1,21 @@
 """src/ticket/utils.py"""
 
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ticket.schemas import TicketOut
+from src.user.base_config import current_user
+from src.user.constants import Role
+
+
+class RoleRequired:
+    def __init__(self, role: Role):
+        self.role = role
+
+    async def __call__(self, user=Depends(current_user)):
+        if user.role != str(self.role):
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return user
 
 
 async def add_and_commit(session: AsyncSession, result) -> TicketOut:
