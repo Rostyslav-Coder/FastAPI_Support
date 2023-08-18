@@ -57,35 +57,63 @@ async def ticket_get_all(
     return tickets
 
 
-@router.get("/ticket_id/{id}", response_model=TicketOut)
-async def ticket_get_by_id(
+@router.patch("/asign", response_model=TicketOut)
+async def ticket_asign(
     ticket_id: int,
     user: UserRead = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.USER):
+    if user.role != str(Role.MANAGER):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    query = select(Ticket).where(
-        and_(Ticket.user_id == user.id, Ticket.id == ticket_id)
-    )
+    query = select(Ticket).where(Ticket.id == ticket_id)
     result = await session.execute(query)
     ticket = result.scalar_one_or_none()
+
+    if ticket is None:
+        raise HTTPException(status_code=204)
+
+    ticket.manager_id = user.id
+    ticket.status = TicketStatus.IN_PROGRESS
+    session.add(ticket)
+    await session.commit()
+    await session.refresh(ticket)
     return ticket
 
 
-@router.get("/ticket_title/{title}", response_model=list[TicketOut])
-async def ticket_get_by_title(
-    ticket_title: str,
+@router.patch("/close", response_model=TicketOut)
+async def ticket_close(
+    ticket_id: int,
     user: UserRead = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.USER):
+    if user.role != str(Role.MANAGER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.id == ticket_id)
+    result = await session.execute(query)
+    ticket = result.scalar_one_or_none()
+    ticket.status = TicketStatus.CLOSED
+    session.add(ticket)
+    await session.commit()
+    await session.refresh(ticket)
+    return ticket
+
+
+@router.get("/all_my_closed", response_model=list[TicketOut])
+async def ticket_get_all_my_closed(
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.MANAGER):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = select(Ticket).where(
-        and_(Ticket.user_id == user.id, Ticket.title == ticket_title)
+        and_(
+            Ticket.manager_id == user.id,
+            Ticket.status == str(TicketStatus.CLOSED),
+        )
     )
     result = await session.execute(query)
-    ticket = result.scalars().all()
-    return ticket
+    tickets = result.scalars().all()
+    return tickets
