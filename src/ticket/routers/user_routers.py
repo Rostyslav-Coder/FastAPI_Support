@@ -43,8 +43,14 @@ async def ticket_get_all(
 ):
     if user.role == str(Role.USER):
         query = select(Ticket).where(Ticket.user_id == user.id)
+
     elif user.role == str(Role.MANAGER):
-        query = select(Ticket).where(Ticket.manager_id.is_(None))
+        query = select(Ticket).where(
+            and_(
+                Ticket.manager_id == user.id,
+                Ticket.status != str(TicketStatus.CLOSED),
+            )
+        )
 
     result = await session.execute(query)
     tickets = result.scalars().all()
