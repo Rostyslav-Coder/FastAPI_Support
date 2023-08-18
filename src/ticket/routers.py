@@ -8,6 +8,11 @@ from src.database import get_async_session
 from src.ticket.constants import TicketStatus
 from src.ticket.models import Message, Ticket
 from src.ticket.schemas import MessageOut, TicketIn, TicketOut
+from src.ticket.utils import (
+    add_and_commit,
+    execute_query_all,
+    execute_query_one,
+)
 from src.user.base_config import current_user
 from src.user.constants import Role
 from src.user.schemas import UserRead
@@ -30,9 +35,9 @@ async def ticket_create(
         user_id=user.id,
         status=TicketStatus.NOT_STARTED,
     )
-    session.add(result)
-    await session.commit()
-    await session.refresh(result)
+
+    result = await add_and_commit(session, result)
+
     return result
 
 
@@ -52,8 +57,8 @@ async def ticket_get_all(
             )
         )
 
-    result = await session.execute(query)
-    tickets = result.scalars().all()
+    tickets = await execute_query_all(session, query)
+
     return tickets
 
 
@@ -66,9 +71,10 @@ async def ticket_get_free(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = select(Ticket).where(Ticket.manager_id.is_(None))
-    result = await session.execute(query)
-    ticket = result.scalars().all()
-    return ticket
+
+    tickets = await execute_query_all(session, query)
+
+    return tickets
 
 
 @router.patch("/asign", response_model=TicketOut)
@@ -81,18 +87,15 @@ async def ticket_asign(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = select(Ticket).where(Ticket.id == ticket_id)
-    result = await session.execute(query)
-    ticket = result.scalar_one_or_none()
 
-    if ticket is None:
-        raise HTTPException(status_code=204)
+    ticket = await execute_query_one(session, query)
 
     ticket.manager_id = user.id
     ticket.status = TicketStatus.IN_PROGRESS
-    session.add(ticket)
-    await session.commit()
-    await session.refresh(ticket)
-    return ticket
+
+    result = await add_and_commit(session, ticket)
+
+    return result
 
 
 @router.patch("/close", response_model=TicketOut)
@@ -105,13 +108,14 @@ async def ticket_close(
         raise HTTPException(status_code=403, detail="Forbidden")
 
     query = select(Ticket).where(Ticket.id == ticket_id)
-    result = await session.execute(query)
-    ticket = result.scalar_one_or_none()
+
+    ticket = await execute_query_one(session, query)
+
     ticket.status = TicketStatus.CLOSED
-    session.add(ticket)
-    await session.commit()
-    await session.refresh(ticket)
-    return ticket
+
+    result = await add_and_commit(session, ticket)
+
+    return result
 
 
 @router.get("/all_closed", response_model=list[TicketOut])
@@ -128,8 +132,9 @@ async def ticket_get_all_my_closed(
             Ticket.status == str(TicketStatus.CLOSED),
         )
     )
-    result = await session.execute(query)
-    tickets = result.scalars().all()
+
+    tickets = await execute_query_all(session, query)
+
     return tickets
 
 
@@ -145,7 +150,7 @@ async def message_craete(
         ticket_id=ticket_id,
         user_id=user.id,
     )
-    session.add(result)
-    await session.commit()
-    await session.refresh(result)
+
+    result = await add_and_commit(session, result)
+
     return result
