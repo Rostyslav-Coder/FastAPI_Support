@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
 from src.ticket.constants import TicketStatus
-from src.ticket.models import Ticket
-from src.ticket.schemas import TicketIn, TicketOut
+from src.ticket.models import Message, Ticket
+from src.ticket.schemas import MessageOut, TicketIn, TicketOut
 from src.user.base_config import current_user
 from src.user.constants import Role
 from src.user.schemas import UserRead
@@ -131,3 +131,21 @@ async def ticket_get_all_my_closed(
     result = await session.execute(query)
     tickets = result.scalars().all()
     return tickets
+
+
+@router.post("/message", response_model=MessageOut)
+async def message_craete(
+    ticket_id: int,
+    text: str,
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    result = Message(
+        text=text,
+        ticket_id=ticket_id,
+        user_id=user.id,
+    )
+    session.add(result)
+    await session.commit()
+    await session.refresh(result)
+    return result
