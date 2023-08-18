@@ -83,5 +83,3 @@ async def ticket_get_by_title(
     result = await session.execute(query)
     ticket = result.scalars().all()
     return ticket
-
-
