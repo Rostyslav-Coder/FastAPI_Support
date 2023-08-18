@@ -1,6 +1,6 @@
 """src/ticket/routers.py"""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +9,7 @@ from src.ticket.constants import TicketStatus
 from src.ticket.models import Message, Ticket
 from src.ticket.schemas import MessageOut, TicketIn, TicketOut
 from src.ticket.utils import (
+    RoleRequired,
     add_and_commit,
     execute_query_all,
     execute_query_one,
@@ -23,12 +24,9 @@ router = APIRouter()
 @router.post("/create", response_model=TicketOut)
 async def ticket_create(
     ticket: TicketIn,
-    user: UserRead = Depends(current_user),
+    user: UserRead = Depends(RoleRequired(Role.USER)),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.USER):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     result = Ticket(
         title=ticket.title,
         text=ticket.text,
@@ -64,12 +62,9 @@ async def ticket_get_all(
 
 @router.get("/free", response_model=list[TicketOut])
 async def ticket_get_free(
-    user: UserRead = Depends(current_user),
+    user: UserRead = Depends(RoleRequired(Role.MANAGER)),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.MANAGER):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     query = select(Ticket).where(Ticket.manager_id.is_(None))
 
     tickets = await execute_query_all(session, query)
@@ -80,12 +75,9 @@ async def ticket_get_free(
 @router.patch("/asign", response_model=TicketOut)
 async def ticket_asign(
     ticket_id: int,
-    user: UserRead = Depends(current_user),
+    user: UserRead = Depends(RoleRequired(Role.MANAGER)),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.MANAGER):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     query = select(Ticket).where(Ticket.id == ticket_id)
 
     ticket = await execute_query_one(session, query)
@@ -101,12 +93,9 @@ async def ticket_asign(
 @router.patch("/close", response_model=TicketOut)
 async def ticket_close(
     ticket_id: int,
-    user: UserRead = Depends(current_user),
+    user: UserRead = Depends(RoleRequired(Role.MANAGER)),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.MANAGER):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     query = select(Ticket).where(Ticket.id == ticket_id)
 
     ticket = await execute_query_one(session, query)
@@ -120,12 +109,9 @@ async def ticket_close(
 
 @router.get("/all_closed", response_model=list[TicketOut])
 async def ticket_get_all_my_closed(
-    user: UserRead = Depends(current_user),
+    user: UserRead = Depends(RoleRequired(Role.MANAGER)),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.MANAGER):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     query = select(Ticket).where(
         and_(
             Ticket.manager_id == user.id,
