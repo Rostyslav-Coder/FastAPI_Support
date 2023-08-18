@@ -41,10 +41,11 @@ async def ticket_get_all(
     user: UserRead = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
 ):
-    if user.role != str(Role.USER):
-        raise HTTPException(status_code=403, detail="Forbidden")
+    if user.role == str(Role.USER):
+        query = select(Ticket).where(Ticket.user_id == user.id)
+    elif user.role == str(Role.MANAGER):
+        query = select(Ticket).where(Ticket.manager_id.is_(None))
 
-    query = select(Ticket).where(Ticket.user_id == user.id)
     result = await session.execute(query)
     tickets = result.scalars().all()
     return tickets
@@ -82,3 +83,5 @@ async def ticket_get_by_title(
     result = await session.execute(query)
     ticket = result.scalars().all()
     return ticket
+
+

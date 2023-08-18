@@ -15,20 +15,6 @@ from src.user.schemas import UserRead
 router = APIRouter()
 
 
-@router.get("/all", response_model=list[TicketOut])
-async def ticket_get_all(
-    user: UserRead = Depends(current_user),
-    session: AsyncSession = Depends(get_async_session),
-):
-    if user.role != str(Role.MANAGER):
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    query = select(Ticket).where(Ticket.manager_id.is_(None))
-    result = await session.execute(query)
-    tickets = result.scalars().all()
-    return tickets
-
-
 @router.patch("/asign", response_model=TicketOut)
 async def ticket_asign(
     ticket_id: int,
