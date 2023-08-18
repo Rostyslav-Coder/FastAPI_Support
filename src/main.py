@@ -2,8 +2,7 @@
 
 from fastapi import FastAPI
 
-from src.ticket.routers.manager_routers import router as manager_ticket_router
-from src.ticket.routers.user_routers import router as user_ticket_router
+from src.ticket.routers.user_routers import router as ticket_router
 from src.user.base_config import auth_backend, fastapi_users
 from src.user.routers import router as user_router
 from src.user.schemas import UserCreate, UserRead, UserUpdate
@@ -42,9 +41,4 @@ app.include_router(
 )
 
 app.include_router(user_router, prefix="/user", tags=["auth"])
-app.include_router(
-    user_ticket_router, prefix="/user_ticket", tags=["user_ticket"]
-)
-app.include_router(
-    manager_ticket_router, prefix="/manager_ticket", tags=["manager_ticket"]
-)
+app.include_router(ticket_router, prefix="/user_ticket", tags=["user_ticket"])
