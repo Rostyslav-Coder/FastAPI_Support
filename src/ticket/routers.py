@@ -15,7 +15,7 @@ from src.user.schemas import UserRead
 router = APIRouter()
 
 
-@router.post("/", response_model=TicketOut)
+@router.post("/create", response_model=TicketOut)
 async def ticket_create(
     ticket: TicketIn,
     user: UserRead = Depends(current_user),
@@ -55,6 +55,20 @@ async def ticket_get_all(
     result = await session.execute(query)
     tickets = result.scalars().all()
     return tickets
+
+
+@router.get("/free", response_model=list[TicketOut])
+async def ticket_get_free(
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    if user.role != str(Role.MANAGER):
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    query = select(Ticket).where(Ticket.manager_id.is_(None))
+    result = await session.execute(query)
+    ticket = result.scalars().all()
+    return ticket
 
 
 @router.patch("/asign", response_model=TicketOut)
@@ -100,7 +114,7 @@ async def ticket_close(
     return ticket
 
 
-@router.get("/all_my_closed", response_model=list[TicketOut])
+@router.get("/all_closed", response_model=list[TicketOut])
 async def ticket_get_all_my_closed(
     user: UserRead = Depends(current_user),
     session: AsyncSession = Depends(get_async_session),
