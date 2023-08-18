@@ -1,4 +1,4 @@
-"""src/ticket/routers/user_routers.py"""
+"""src/ticket/routers.py"""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import and_, select
