@@ -1,13 +1,18 @@
 """src/ticket/routers.py"""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_async_session
 from src.ticket.constants import TicketStatus
 from src.ticket.models import Message, Ticket
-from src.ticket.schemas import MessageOut, TicketIn, TicketOut
+from src.ticket.schemas import (
+    MessageOut,
+    TicketIn,
+    TicketMessageOut,
+    TicketOut,
+)
 from src.ticket.utils import (
     RoleRequired,
     add_and_commit,
@@ -140,3 +145,29 @@ async def message_craete(
     result = await add_and_commit(session, result)
 
     return result
+
+
+@router.get("/message", response_model=TicketMessageOut)
+async def message_get(
+    ticket_id: int,
+    user: UserRead = Depends(current_user),
+    session: AsyncSession = Depends(get_async_session),
+):
+    query_tiket = select(Ticket).where(
+        and_(
+            Ticket.id == ticket_id,
+            (Ticket.user_id == user.id) | (Ticket.manager_id == user.id),
+        )
+    )
+    ticket = await execute_query_one(session, query_tiket)
+
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    query_messages = select(Message).where(Message.ticket_id == ticket_id)
+    messages = await execute_query_all(session, query_messages)
+
+    ticket_dict = ticket.__dict__
+    messages_dict = [message.__dict__ for message in messages]
+
+    return TicketMessageOut(ticket=ticket_dict, messages=messages_dict)
