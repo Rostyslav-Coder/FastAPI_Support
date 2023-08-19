@@ -40,3 +40,8 @@ class MessageOut(MessageIn):
     timestamp: datetime
 
     __config__ = ConfigDict(from_attributes=True)
+
+
+class TicketMessageOut(BaseModel):
+    ticket: TicketOut
+    messages: list[MessageOut]
